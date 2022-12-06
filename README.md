@@ -3,9 +3,10 @@
 MoneyForwardの口座情報をプログラムで一括更新するためのソフト
 
 ## 注意点
-MoneyForwardにログインするためには、２段階認証を突破しなければならない
-そのため、２段階認証設定時の認証コードをメモし、「.env」ファイルに書く必要がある。
+MoneyForwardにログインするためには、メールアドレス・パスワード・認証コードが必要であり、「.env」ファイルに書く必要がある。
 
 ```markdown:.env
 TWO_STEP_AUTHENTICATION_SETTING_CODE='XXXX XXXX XXXX XXXX'
+MONEYFORWARD_MAIL_ADDRESS="sample@example.com"
+MONEYFORWARD_PASSWORD="p@ssW0rd"
 ```
