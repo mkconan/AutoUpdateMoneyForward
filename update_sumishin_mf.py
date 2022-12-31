@@ -70,9 +70,7 @@ def update_account(driver: WebDriver) -> None:
     update_buttons = driver.find_elements(By.CSS_SELECTOR, "input[value='更新']")
     for update_button in update_buttons:
         update_button.click()
-        # 更新ボタンを押す間隔をランダムにして、ロボットっぽくさせないようにしている
-        wait_time = random.uniform(1.0, 3.0)
-        sleep(wait_time)
+        driver.implicitly_wait(3)
 
 
 def main():
