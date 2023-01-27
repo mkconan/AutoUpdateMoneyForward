@@ -13,7 +13,6 @@ from selenium.webdriver.common.by import By
 
 # MoneyForwardの二段階認証を突破するためのもの
 load_dotenv()
-TWO_STEP_AUTHENTICATION_SETTING_CODE = os.environ["TWO_STEP_AUTHENTICATION_SETTING_CODE"]
 MONEYFORWARD_MAIL_ADDRESS = os.environ["MONEYFORWARD_MAIL_ADDRESS"]
 MONEYFORWARD_PASSWORD = os.environ["MONEYFORWARD_PASSWORD"]
 
