@@ -1,84 +1,80 @@
 import os
-from time import sleep
 from dotenv import load_dotenv
-import subprocess
-import re
-import random
 
-from selenium import webdriver
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium import webdriver
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.common.by import By
+from playwright.sync_api import sync_playwright, Page
 
-# MoneyForwardの二段階認証を突破するためのもの
 load_dotenv()
 MONEYFORWARD_MAIL_ADDRESS = os.environ["MONEYFORWARD_MAIL_ADDRESS"]
 MONEYFORWARD_PASSWORD = os.environ["MONEYFORWARD_PASSWORD"]
 
 
-def web_driver_setting() -> WebDriver:
-    """ウェブドライバの初期設定
-
-    Returns:
-        WebDriver:
-    """
-    driver = webdriver.Chrome()
-    driver.implicitly_wait(2)
-    return driver
-
-
-def login_moneyforward(mf_url: str) -> WebDriver:
+def login_moneyforward(page: Page, mf_url: str) -> None:
     """マネーフォワードにログイン
 
     Args:
+        page (Page): Playwright の Page オブジェクト
         mf_url (str): マネーフォワードのURL
-
-    Returns:
-        WebDriver:
     """
-    driver = web_driver_setting()
-    driver.get(mf_url)
+    page.goto(mf_url)
     print("Login moneyforward")
-    # ログイン
-    mail_address = driver.find_element(by=By.CSS_SELECTOR, value="#sign_in_session_service_email")
-    mail_address.send_keys(MONEYFORWARD_MAIL_ADDRESS)
 
-    password = driver.find_element(by=By.CSS_SELECTOR, value="#sign_in_session_service_password")
-    password.send_keys(MONEYFORWARD_PASSWORD)
-    login_button = driver.find_element(by=By.CSS_SELECTOR, value="#login-btn-sumit")
-    login_button.click()
+    page.fill("#sign_in_session_service_email", MONEYFORWARD_MAIL_ADDRESS)
+    page.fill("#sign_in_session_service_password", MONEYFORWARD_PASSWORD)
+    page.click("#login-btn-sumit")
 
-    sleep(3)
-
-    return driver
+    page.wait_for_load_state("networkidle")
 
 
-def update_account(driver: WebDriver) -> None:
+def update_account(page: Page) -> None:
     """口座情報を更新する
 
     Args:
-        driver (WebDriver): マネーフォワードトップページが表示されている状態
+        page (Page): マネーフォワードトップページが表示されている状態
     """
     # 口座タブへ移動
-    account_button = driver.find_element(By.CLASS_NAME, "mf-icon-account")
-    account_button.click()
-    sleep(1)
+    page.click(".mf-icon-account")
+    page.wait_for_load_state("domcontentloaded")
 
-    # 更新ボタンをクリック
-    update_buttons = driver.find_elements(By.CSS_SELECTOR, "input[value='更新']")
-    for update_button in update_buttons:
-        update_button.click()
-        driver.implicitly_wait(3)
+    # 各フォームの情報を収集し、fetch() で更新リクエストを送信する
+    # （ボタンクリックだとフォーム送信でページ遷移が発生し、
+    #   事前に収集した action URL が無効になるため fetch を使用）
+    results: list[str] = page.evaluate("""
+        async () => {
+            const buttons = Array.from(
+                document.querySelectorAll("input[value='更新']:not([disabled])")
+            );
+            const results = [];
+            for (const btn of buttons) {
+                const form = btn.closest('form');
+                try {
+                    await fetch(form.action, {
+                        method: form.method || 'POST',
+                        body: new FormData(form),
+                    });
+                    results.push(form.action.split('/').pop().slice(0, 8));
+                } catch (e) {
+                    results.push('error: ' + e.message);
+                }
+            }
+            return results;
+        }
+    """)
+    print(f"更新対象: {len(results)} 件")
+    for r in results:
+        print(f"更新リクエスト送信: {r}...")
 
 
 def main():
-    web_driver_setting()
     login_moneyforward_url = "https://ssnb.x.moneyforward.com/users/sign_in"
-    moneyforward_browser = login_moneyforward(mf_url=login_moneyforward_url)
-
-    update_account(moneyforward_browser)
-    print("Complete!!")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+        try:
+            login_moneyforward(page, mf_url=login_moneyforward_url)
+            update_account(page)
+            print("Complete!!")
+        finally:
+            browser.close()
 
 
 if __name__ == "__main__":

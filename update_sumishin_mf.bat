@@ -1,1 +1,1 @@
-python update_sumishin_mf.py
+uv run python update_sumishin_mf.py

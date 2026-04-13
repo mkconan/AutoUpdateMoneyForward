@@ -1,2 +1,2 @@
 cd `dirname $0`
-python update_normal_mf.py
+uv run python update_normal_mf.py
