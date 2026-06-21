@@ -25,10 +25,17 @@ def web_driver_setting() -> WebDriver:
         WebDriver:
     """
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")        
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
     options.add_argument(f'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36')
-    driver = webdriver.Chrome(options=options)
-    driver.implicitly_wait(2)    
+    chromium_binary = os.environ.get("CHROME_BINARY", "/usr/bin/chromium")
+    if os.path.exists(chromium_binary):
+        options.binary_location = chromium_binary
+    chromedriver_path = os.environ.get("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+    service = Service(executable_path=chromedriver_path) if os.path.exists(chromedriver_path) else Service()
+    driver = webdriver.Chrome(options=options, service=service)
+    driver.implicitly_wait(2)
     return driver
 
 

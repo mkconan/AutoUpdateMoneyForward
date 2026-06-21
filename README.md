@@ -22,5 +22,5 @@ python update_normal_mf.py
 
 ### 実行方法（MoneyForward for 住信SBIネット銀行の場合）
 ```python
-python update_normal_mf.py
+python update_sumishin_mf.py
 ```
