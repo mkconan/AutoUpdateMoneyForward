@@ -24,3 +24,4 @@ python update_normal_mf.py
 ```python
 python update_sumishin_mf.py
 ```
+住信SBI用は Playwright を使用する。デフォルトではシステムにインストール済みの Chromium（`/usr/bin/chromium`）を起動するため、`playwright install` でブラウザを別途取得する必要はない。Chromium のパスを変更したい場合は環境変数 `CHROME_BINARY` で上書きできる。
